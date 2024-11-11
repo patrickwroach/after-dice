@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { initializeApp } from 'firebase/app'
 import { getDatabase, ref, set, onValue, push } from 'firebase/database'
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import Container from '@mui/material/Container'
@@ -18,18 +19,19 @@ import Chip from '@mui/material/Chip'
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDGqmEJCBFjAmfVDgSvG2EvNPlKTv0MM-w",
-  authDomain: "after-dice.firebaseapp.com",
-  projectId: "after-dice",
-  storageBucket: "after-dice.firebasestorage.app",
-  messagingSenderId: "747242561379",
-  appId: "1:747242561379:web:9db0b4bc24ce8f42a1bd56",
-  measurementId: "G-7DHTLTGKCX"
-}
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 const database = getDatabase(app)
+const auth = getAuth(app)
 
 // Create a theme instance
 const theme = createTheme({
@@ -45,13 +47,35 @@ const theme = createTheme({
 })
 
 export default function DiceRoller() {
-  const [roomId, setRoomId] = useState('test')
-  const [userName, setUserName] = useState('Pat')
+  const [roomId, setRoomId] = useState('')
+  const [userName, setUserName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [numDice, setNumDice] = useState(1)
   const [minSuccess, setMinSuccess] = useState(4)
   const [maxSuccess, setMaxSuccess] = useState(6)
-  const [rolls, setRolls] = useState([])
+  const [user, setUser] = useState(null)
+  interface Roll {
+    user: string;
+    rolls: { value: number; success: boolean }[];
+    timestamp: number;
+  }
+
+  const [rolls, setRolls] = useState<Roll[]>([])
   const [joined, setJoined] = useState(false)
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser(user)
+        setUserName(user.displayName || user.email)
+      } else {
+        setUser(null)
+        setUserName('')
+      }
+    })
+    return () => unsubscribe()
+  }, [])
 
   useEffect(() => {
     if (joined) {
@@ -95,34 +119,65 @@ export default function DiceRoller() {
     })
   }
 
+  const handleSignUp = () => {
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        setUser(userCredential.user)
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }
+
+  const handleSignIn = () => {
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        setUser(userCredential.user)
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }
+
+  const handleSignOut = () => {
+    signOut(auth)
+      .then(() => {
+        setUser(null)
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Container maxWidth="md">
         <Box sx={{ my: 4 }}>
-          {!joined ? (
+          {!user ? (
             <Card>
-              <CardHeader title="Join or Create a Room" />
+              <CardHeader title="Sign In or Sign Up" />
               <CardContent>
                 <Box component="form" noValidate autoComplete="off" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <TextField
-                    label="Your Name"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
+                    label="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     fullWidth
                   />
                   <TextField
-                    label="Room ID"
-                    value={roomId}
-                    onChange={(e) => setRoomId(e.target.value.toUpperCase())}
+                    label="Password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     fullWidth
                   />
                   <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button variant="contained" onClick={joinRoom} disabled={!roomId || !userName}>
-                      Join Room
+                    <Button variant="contained" onClick={handleSignIn} disabled={!email || !password}>
+                      Sign In
                     </Button>
-                    <Button variant="outlined" onClick={createRoom} disabled={!userName}>
-                      Create Room
+                    <Button variant="outlined" onClick={handleSignUp} disabled={!email || !password}>
+                      Sign Up
                     </Button>
                   </Box>
                 </Box>
@@ -167,10 +222,13 @@ export default function DiceRoller() {
                 <Button variant="contained" onClick={rollDice} fullWidth sx={{ mb: 2 }}>
                   Roll Dice
                 </Button>
+                <Button variant="contained" onClick={handleSignOut} fullWidth sx={{ mb: 2 }}>
+                  Sign Out
+                </Button>
                 <Typography variant="h6" gutterBottom>
                   Roll Results:
                 </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column-reverse', gap: 2 }}>
                   {rolls.map((roll, index) => (
                     <Card key={index} variant="outlined">
                       <CardContent>
