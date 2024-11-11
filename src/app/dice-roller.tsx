@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import { initializeApp } from 'firebase/app'
 import { getDatabase, ref, set, onValue, push } from 'firebase/database'
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import Container from '@mui/material/Container'
@@ -31,7 +30,6 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 const database = getDatabase(app)
-const auth = getAuth(app)
 
 // Create a theme instance
 const theme = createTheme({
@@ -49,12 +47,9 @@ const theme = createTheme({
 export default function DiceRoller() {
   const [roomId, setRoomId] = useState('')
   const [userName, setUserName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [numDice, setNumDice] = useState(1)
   const [minSuccess, setMinSuccess] = useState(4)
   const [maxSuccess, setMaxSuccess] = useState(6)
-  const [user, setUser] = useState(null)
   interface Roll {
     user: string;
     rolls: { value: number; success: boolean }[];
@@ -63,19 +58,6 @@ export default function DiceRoller() {
 
   const [rolls, setRolls] = useState<Roll[]>([])
   const [joined, setJoined] = useState(false)
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user)
-        setUserName(user.displayName || user.email)
-      } else {
-        setUser(null)
-        setUserName('')
-      }
-    })
-    return () => unsubscribe()
-  }, [])
 
   useEffect(() => {
     if (joined) {
@@ -119,65 +101,34 @@ export default function DiceRoller() {
     })
   }
 
-  const handleSignUp = () => {
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        setUser(userCredential.user)
-      })
-      .catch((error) => {
-        console.error(error)
-      })
-  }
-
-  const handleSignIn = () => {
-    signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        setUser(userCredential.user)
-      })
-      .catch((error) => {
-        console.error(error)
-      })
-  }
-
-  const handleSignOut = () => {
-    signOut(auth)
-      .then(() => {
-        setUser(null)
-      })
-      .catch((error) => {
-        console.error(error)
-      })
-  }
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Container maxWidth="md">
         <Box sx={{ my: 4 }}>
-          {!user ? (
+          {!joined ? (
             <Card>
-              <CardHeader title="Sign In or Sign Up" />
+              <CardHeader title="Join or Create a Room" />
               <CardContent>
                 <Box component="form" noValidate autoComplete="off" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <TextField
-                    label="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    label="Your Name"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
                     fullWidth
                   />
                   <TextField
-                    label="Password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    label="Room ID"
+                    value={roomId}
+                    onChange={(e) => setRoomId(e.target.value.toUpperCase())}
                     fullWidth
                   />
                   <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button variant="contained" onClick={handleSignIn} disabled={!email || !password}>
-                      Sign In
+                    <Button variant="contained" onClick={joinRoom} disabled={!roomId || !userName}>
+                      Join Room
                     </Button>
-                    <Button variant="outlined" onClick={handleSignUp} disabled={!email || !password}>
-                      Sign Up
+                    <Button variant="outlined" onClick={createRoom} disabled={!userName}>
+                      Create Room
                     </Button>
                   </Box>
                 </Box>
@@ -222,13 +173,10 @@ export default function DiceRoller() {
                 <Button variant="contained" onClick={rollDice} fullWidth sx={{ mb: 2 }}>
                   Roll Dice
                 </Button>
-                <Button variant="contained" onClick={handleSignOut} fullWidth sx={{ mb: 2 }}>
-                  Sign Out
-                </Button>
                 <Typography variant="h6" gutterBottom>
                   Roll Results:
                 </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column-reverse', gap: 2 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column-reverse',  flexWrap: 'wrape', gap: 2 }}>
                   {rolls.map((roll, index) => (
                     <Card key={index} variant="outlined">
                       <CardContent>
