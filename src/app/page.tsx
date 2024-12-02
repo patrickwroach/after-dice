@@ -1,5 +1,5 @@
 import styles from "./page.module.css";
-import DiceRoller from "./dice-roller";
+import DiceRoller from "./DiceRoller";
 
 export default function Home() {
   return (

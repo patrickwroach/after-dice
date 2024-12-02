@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, onValue, push } from "firebase/database";
+import { getDatabase, ref, set, onValue } from "firebase/database";
 import {
   getAuth,
   signInWithPopup,
@@ -24,6 +24,8 @@ import Switch from "@mui/material/Switch";
 import Modal from "@mui/material/Modal";
 import RoomManager from "./RoomManager";
 import DiceRollerArea from "./DiceRollerArea";
+import CharacterSheet from "./CharacterSheet";
+import Navigation from "./Navigation";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -58,8 +60,6 @@ const theme = createTheme({
 export default function DiceRoller() {
   const [roomId, setRoomId] = useState("");
   const [userName, setUserName] = useState("");
-  const [numDice, setNumDice] = useState(1);
-  const [minSuccess, setMinSuccess] = useState(4);
   const [user, setUser] = useState<null | User>(null);
   const [userRooms, setUserRooms] = useState<string[]>([]);
   const [allRooms, setAllRooms] = useState<string[]>([]);
@@ -67,15 +67,23 @@ export default function DiceRoller() {
   const [showModal, setShowModal] = useState(false);
   const [modalIsPrivate, setModalIsPrivate] = useState(false);
   const [skipLogin, setSkipLogin] = useState(false);
+  const [characterSheetOpen, setCharacterSheetOpen] = useState(false);
+
+  interface RollData {
+    user: string;
+    rolls: Roll[];
+    successCount: number;
+    timestamp: number;
+    rollType: string;
+  }
 
   interface Roll {
     user: string;
-    rolls: { value: number; success: boolean }[];
-    successCount: number;
-    timestamp: number;
+    value: number;
+    success: boolean;
   }
 
-  const [rolls, setRolls] = useState<Roll[]>([]);
+  const [rolls, setRolls] = useState<RollData[]>([]);
   const [joined, setJoined] = useState(false);
   /* 
   const isLocalhost = window?.location?.hostname === "localhost";
@@ -172,6 +180,7 @@ export default function DiceRoller() {
     const userRoomsRef = ref(database, `users/${user?.uid}/${databasePath}/${newRoomId}`);
     set(userRoomsRef, { joined: true });
     setJoined(true);
+  
 
     // Schedule room deletion if no rolls are made within 24 hours
     setTimeout(() => {
@@ -208,26 +217,7 @@ export default function DiceRoller() {
     setRoomId("");
   };
 
-  const rollDice = () => {
-    const newRolls = [];
-    let successCount = 0;
-    for (let i = 0; i < numDice; i++) {
-      const roll = Math.floor(Math.random() * 6) + 1;
-      const success = roll >= minSuccess && roll <= 6;
-      if (success) successCount++;
-      newRolls.push({
-        value: roll,
-        success,
-      });
-    }
-    const rollRef = push(ref(database, `rooms/${roomId}/rolls`));
-    set(rollRef, {
-      user: userName,
-      rolls: newRolls,
-      successCount,
-      timestamp: Date.now(),
-    });
-  };
+  
 
   const handleGoogleSignIn = () => {
     signInWithPopup(auth, provider)
@@ -257,6 +247,9 @@ export default function DiceRoller() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+   
+
+      <CharacterSheet open={characterSheetOpen} toggleCharacterSheet={setCharacterSheetOpen} />
       <Container maxWidth="md">
         <Box sx={{ my: 4 }}>
           {!user && !skipLogin ? (
@@ -288,14 +281,13 @@ export default function DiceRoller() {
             </Card>
           ) : (
             <>
-              <Button
-                variant="contained"
-                onClick={handleSignOut}
-                fullWidth
-                sx={{ mb: 2 }}
-              >
-                Sign Out
-              </Button>
+              <Navigation
+                inRoom={joined}
+                onToggleCharacterSheet={()=>setCharacterSheetOpen(prev=>!prev)}
+                onSignOut={handleSignOut}
+                onLeaveRoom={leaveRoom}
+                skipLogin={skipLogin}
+              />
               {!joined ? (
                 <RoomManager
                   userName={userName}
@@ -313,13 +305,9 @@ export default function DiceRoller() {
               ) : (
                 <DiceRollerArea
                   roomId={roomId}
-                  numDice={numDice}
-                  setNumDice={setNumDice}
-                  minSuccess={minSuccess}
-                  setMinSuccess={setMinSuccess}
-                
-          
-                  rollDice={rollDice}
+                  database={database}
+                  characterSheetOpen={characterSheetOpen}
+                  userName={userName}
                   leaveRoom={leaveRoom}
                   rolls={rolls}
                 />
