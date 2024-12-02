@@ -48,7 +48,7 @@ const StatPanel: React.FC<TabPanelProps> = ({
                 onClick={() => {
                   rollDice(value as number);
                 }}
-                sx={{display: 'flex', flexDirection: 'column'}}
+                sx={{ display: "flex", flexDirection: "column" }}
               >
                 <Typography variant="button">{value}</Typography>
                 <Typography variant="caption"> {key}</Typography>
@@ -71,30 +71,36 @@ const StatButtons: React.FC<StatButtonsProps> = ({ sheet, rollDice }) => {
       <Tabs
         value={value}
         onChange={handleChange}
-        sx={{ marginBlockEnd: 1,  
-            ".MuiTabs-flexContainer": {
+        sx={{
+          marginBlockEnd: 1,
+          ".MuiTabs-flexContainer": {
             justifyContent: "center",
-          },}}
+          },
+        }}
       >
-   
+        {Object.values(sheet.present).some((x) => x > 0) && (
           <Tab label="Present" />
-          <Tab label="Past" />
-     
+        )}
+        {Object.values(sheet.past).some((x) => x > 0) && <Tab label="Past" />}
       </Tabs>
-      <StatPanel
-        value={value}
-        index={0}
-        type="present"
-        rollDice={rollDice}
-        sheet={sheet}
-      />
-      <StatPanel
-        value={value}
-        index={1}
-        type="past"
-        rollDice={rollDice}
-        sheet={sheet}
-      />
+      {Object.values(sheet.present).some((x) => x > 0) && (
+        <StatPanel
+          value={value}
+          index={0}
+          type="present"
+          rollDice={rollDice}
+          sheet={sheet}
+        />
+      )}
+      {Object.values(sheet.past).some((x) => x > 0) && (
+        <StatPanel
+          value={value}
+          index={1}
+          type="past"
+          rollDice={rollDice}
+          sheet={sheet}
+        />
+      )}
     </Box>
   );
 };

@@ -1,5 +1,4 @@
 import React from "react";
-import CharacterSheet from "./CharacterSheet";
 import { Grid2, Button, Card, CardContent, CardHeader, Switch, TextField, Typography } from "@mui/material";
 
 interface RoomManagerProps {
