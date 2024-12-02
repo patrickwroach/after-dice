@@ -1,5 +1,5 @@
 import React from "react";
-import { AppBar, Toolbar, Button, IconButton } from "@mui/material";
+import { AppBar, Toolbar, IconButton } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSignOutAlt,

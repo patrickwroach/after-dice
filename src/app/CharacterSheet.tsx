@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState, useMemo } from "react";
 import { Box, TextField, Drawer } from "@mui/material";
 const defaultSheet = {
@@ -86,8 +87,6 @@ const CharacterSheet: React.FC<CharacterSheetProps> = ({
 
   useEffect(() => {
     const savedSheet = localStorage.getItem("after-character-sheet");
-    console.log(savedSheet);
-    console.log(JSON.stringify(sheet));
     if (savedSheet !== JSON.stringify(sheet)) {
       localStorage.setItem("after-character-sheet", JSON.stringify(sheet));
     }

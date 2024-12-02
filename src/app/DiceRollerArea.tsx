@@ -3,11 +3,7 @@ import { getDatabase, push, ref, set } from "firebase/database";
 import {
   Box,
   Button,
-  Card,
-  CardContent,
-  CardHeader,
   TextField,
-  Typography,
 } from "@mui/material";
 import CheckRollCard from "./CheckRollCard";
 import RiskRollCard from "./RiskRollCard";
@@ -48,8 +44,8 @@ const DiceRollerArea: React.FC<DiceRollerAreaProps> = ({
   const rollDice = (setDiceNum?: number) => {
     const newRolls = [];
     let successCount = 0;
-    const numofRolls = setDiceNum || numDice;
-    for (let i = 0; i < numofRolls; i++) {
+    const numOfRolls = setDiceNum || numDice;
+    for (let i = 0; i < numOfRolls; i++) {
       const roll = Math.floor(Math.random() * 6) + 1;
       const success = roll >= minSuccess && roll <= 6;
       if (success) successCount++;
@@ -104,7 +100,7 @@ const DiceRollerArea: React.FC<DiceRollerAreaProps> = ({
             label="Number of Dice"
             type="number"
             InputProps={{ inputProps: { min: 1 } }}
-            value={numDice}
+            value={numDice || 0}
             onChange={(e) => setNumDice(parseInt(e.target.value))}
             sx={{ flexBasis: "32%" }}
           />
@@ -112,7 +108,7 @@ const DiceRollerArea: React.FC<DiceRollerAreaProps> = ({
             label="Min for Success"
             type="number"
             InputProps={{ inputProps: { min: 1, max: 6 } }}
-            value={minSuccess}
+            value={minSuccess || 0}
             onChange={(e) => setMinSuccess(parseInt(e.target.value))}
             sx={{ flexBasis: "32%" }}
           />
