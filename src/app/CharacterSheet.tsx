@@ -1,7 +1,6 @@
-"use client";
 import React, { useEffect, useState, useMemo } from "react";
 import { Box, TextField, Drawer } from "@mui/material";
-const defaultSheet = {
+export const defaultSheet = {
   focus: 1,
   memories: 1,
   past: {
@@ -45,7 +44,7 @@ const CharacterSheet: React.FC<CharacterSheetProps> = ({
   toggleCharacterSheet,
 }) => {
   const savedSheet = useMemo(() => {
-    const fetchedSheet = localStorage.getItem("after-character-sheet");
+    const fetchedSheet = typeof window !== 'undefined' ? localStorage.getItem("after-character-sheet") : null;
     return typeof fetchedSheet === "string"
       ? JSON.parse(fetchedSheet)
       : defaultSheet;
@@ -79,16 +78,20 @@ const CharacterSheet: React.FC<CharacterSheetProps> = ({
   };
 
   useEffect(() => {
-    const savedSheet = localStorage.getItem("after-character-sheet");
-    if (savedSheet) {
-      setSheet(JSON.parse(savedSheet));
+    if (typeof window !== "undefined") {
+      const savedSheet = localStorage.getItem("after-character-sheet");
+      if (savedSheet) {
+        setSheet(JSON.parse(savedSheet));
+      }
     }
   }, []);
 
   useEffect(() => {
-    const savedSheet = localStorage.getItem("after-character-sheet");
-    if (savedSheet !== JSON.stringify(sheet)) {
-      localStorage.setItem("after-character-sheet", JSON.stringify(sheet));
+    if (typeof window !== "undefined") {
+      const savedSheet = localStorage.getItem("after-character-sheet");
+      if (savedSheet !== JSON.stringify(sheet)) {
+        localStorage.setItem("after-character-sheet", JSON.stringify(sheet));
+      }
     }
   }, [sheet]);
 

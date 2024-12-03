@@ -9,6 +9,8 @@ import CheckRollCard from "./CheckRollCard";
 import RiskRollCard from "./RiskRollCard";
 import StatButtons from "./StatButtons";
 
+import { defaultSheet } from "./CharacterSheet";
+
 interface Roll {
   value: number;
   success: boolean;
@@ -64,9 +66,11 @@ const DiceRollerArea: React.FC<DiceRollerAreaProps> = ({
     });
   };
 
-  const afterSheet = React.useMemo(() => {
-    const sheet = localStorage.getItem("after-character-sheet");
-    return sheet ? JSON.parse(sheet) : null;
+  const afterSheet = React.useMemo(() => { 
+    const fetchedSheet = typeof window !== 'undefined' ? localStorage.getItem("after-character-sheet") : null;
+    return typeof fetchedSheet === "string"
+      ? JSON.parse(fetchedSheet)
+      : defaultSheet;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [characterSheetOpen]);
 
